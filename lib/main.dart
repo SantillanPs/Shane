@@ -8,17 +8,17 @@ import 'screens/invoice_details_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const InvoiceApp());
+  runApp(const MyApp());
 }
 
-class InvoiceApp extends StatefulWidget {
-  const InvoiceApp({Key? key}) : super(key: key);
+class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
-  State<InvoiceApp> createState() => _InvoiceAppState();
+  State<MyApp> createState() => _InvoiceAppState();
 }
 
-class _InvoiceAppState extends State<InvoiceApp> {
+class _InvoiceAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.light;
 
   void setThemeMode(ThemeMode themeMode) {
