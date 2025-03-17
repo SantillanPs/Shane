@@ -354,9 +354,6 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: 16),
-
                         // Tab Content
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.275,
