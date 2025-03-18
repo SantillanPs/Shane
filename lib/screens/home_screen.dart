@@ -298,6 +298,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
 
+                const SizedBox(height: 24),
+
                 // Tab Bar and New Invoice Button
                 Container(
                   decoration: BoxDecoration(
@@ -354,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         // Tab Content
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.275,
+                          height: MediaQuery.of(context).size.height * 0.227,
                           child: TabBarView(
                             controller: _tabController,
                             children: [
