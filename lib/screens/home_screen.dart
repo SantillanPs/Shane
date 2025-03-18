@@ -334,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen>
                                 indicatorSize: TabBarIndicatorSize.label,
                               ),
                             ),
-                            const SizedBox(width: 8),
                             ElevatedButton.icon(
                               icon: const Icon(Icons.add, size: 18),
                               label: const Text('New'),
