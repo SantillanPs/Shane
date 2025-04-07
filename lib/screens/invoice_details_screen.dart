@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/invoice.dart';
+import '../providers/invoice_provider.dart';
 
 class InvoiceDetailsScreen extends StatelessWidget {
   const InvoiceDetailsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // In a real app, this would be passed as a parameter or fetched from a database
-    final invoice = getSampleInvoices().first;
+    // Get the invoice from arguments or use the first one as a fallback
+    final invoice =
+        ModalRoute.of(context)?.settings.arguments as Invoice? ??
+        Provider.of<InvoiceProvider>(context, listen: false).invoices.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -345,17 +349,27 @@ class InvoiceDetailsScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Mark as paid
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Mark as Paid'),
-                ),
+              Consumer<InvoiceProvider>(
+                builder: (context, invoiceProvider, _) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          invoice.status != 'Paid'
+                              ? () {
+                                invoiceProvider.markAsPaid(invoice.id);
+                                Navigator.pop(context);
+                              }
+                              : null,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: Text(
+                        invoice.status == 'Paid' ? 'Paid' : 'Mark as Paid',
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

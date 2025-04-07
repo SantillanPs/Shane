@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final Function(ThemeMode)? setThemeMode;
-
-  const SettingsScreen({Key? key, required this.setThemeMode})
-    : super(key: key);
+  const SettingsScreen({Key? key}) : super(key: key);
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -13,8 +13,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isDarkMode = false;
-  String _accentColor = 'blue';
 
   @override
   void initState() {
@@ -26,15 +24,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  void _toggleTheme() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-      if (widget.setThemeMode != null) {
-        widget.setThemeMode!(_isDarkMode ? ThemeMode.dark : ThemeMode.light);
-      }
-    });
   }
 
   @override
@@ -149,6 +138,27 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ],
           ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            return OutlinedButton.icon(
+              onPressed: () async {
+                await authProvider.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text('Sign Out'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                foregroundColor: Colors.red,
+              ),
+            );
+          },
         ),
       ],
     );
@@ -410,125 +420,121 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _buildAppTab() {
-    return ListView(
-      children: [
-        _buildSettingsCard(
-          title: 'Notifications',
-          icon: Icons.notifications,
-          description: 'Manage your notification preferences',
-          content: Column(
-            children: [
-              _buildSettingsRow(
-                title: 'Email Notifications',
-                subtitle: 'Receive email notifications for important updates',
-                trailing: Switch(value: true, onChanged: (value) {}),
-              ),
-              const Divider(),
-              _buildSettingsRow(
-                title: 'Payment Reminders',
-                subtitle: 'Send reminders for upcoming and overdue payments',
-                trailing: Switch(value: true, onChanged: (value) {}),
-              ),
-              const Divider(),
-              _buildSettingsRow(
-                title: 'App Notifications',
-                subtitle: 'Enable push notifications on your device',
-                trailing: Switch(value: false, onChanged: (value) {}),
-              ),
-            ],
-          ),
-        ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        final isDarkMode = themeProvider.themeMode == ThemeMode.dark;
 
-        const SizedBox(height: 16),
-
-        _buildSettingsCard(
-          title: 'Appearance',
-          icon: Icons.palette,
-          description: 'Customize how the app looks',
-          content: Column(
-            children: [
-              _buildSettingsRow(
-                title: 'Dark Mode',
-                subtitle: 'Switch between light and dark themes',
-                trailing: Row(
-                  children: [
-                    const Icon(Icons.light_mode, size: 16),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: _isDarkMode,
-                      onChanged: (value) {
-                        _toggleTheme();
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.dark_mode, size: 16),
-                  ],
-                ),
-              ),
-              const Divider(),
-              _buildDropdown(
-                label: 'Accent Color',
-                value: _accentColor,
-                items: const [
-                  DropdownMenuItem(value: 'blue', child: Text('Blue')),
-                  DropdownMenuItem(value: 'green', child: Text('Green')),
-                  DropdownMenuItem(value: 'purple', child: Text('Purple')),
-                  DropdownMenuItem(value: 'orange', child: Text('Orange')),
-                  DropdownMenuItem(value: 'pink', child: Text('Pink')),
+        return ListView(
+          children: [
+            _buildSettingsCard(
+              title: 'Notifications',
+              icon: Icons.notifications,
+              description: 'Manage your notification preferences',
+              content: Column(
+                children: [
+                  _buildSettingsRow(
+                    title: 'Email Notifications',
+                    subtitle:
+                        'Receive email notifications for important updates',
+                    trailing: Switch(value: true, onChanged: (value) {}),
+                  ),
+                  const Divider(),
+                  _buildSettingsRow(
+                    title: 'Payment Reminders',
+                    subtitle:
+                        'Send reminders for upcoming and overdue payments',
+                    trailing: Switch(value: true, onChanged: (value) {}),
+                  ),
+                  const Divider(),
+                  _buildSettingsRow(
+                    title: 'App Notifications',
+                    subtitle: 'Enable push notifications on your device',
+                    trailing: Switch(value: false, onChanged: (value) {}),
+                  ),
                 ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _accentColor = value;
-                    });
-                  }
-                },
               ),
-            ],
-          ),
-        ),
+            ),
 
-        const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-        _buildSettingsCard(
-          title: 'Advanced',
-          icon: Icons.settings,
-          description: 'Advanced app settings',
-          content: Column(
-            children: [
-              _buildSettingsRow(
-                title: 'Data Export',
-                subtitle: 'Export all your invoice data',
-                trailing: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Export'),
-                ),
+            _buildSettingsCard(
+              title: 'Appearance',
+              icon: Icons.palette,
+              description: 'Customize how the app looks',
+              content: Column(
+                children: [
+                  _buildSettingsRow(
+                    title: 'Dark Mode',
+                    subtitle: 'Switch between light and dark themes',
+                    trailing: Row(
+                      children: [
+                        const Icon(Icons.light_mode, size: 16),
+                        const SizedBox(width: 8),
+                        Switch(
+                          value: isDarkMode,
+                          onChanged: (value) {
+                            themeProvider.setThemeMode(
+                              value ? ThemeMode.dark : ThemeMode.light,
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.dark_mode, size: 16),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  _buildDropdown(
+                    label: 'Accent Color',
+                    value: themeProvider.accentColor,
+                    items: const [
+                      DropdownMenuItem(value: 'blue', child: Text('Blue')),
+                      DropdownMenuItem(value: 'green', child: Text('Green')),
+                      DropdownMenuItem(value: 'purple', child: Text('Purple')),
+                      DropdownMenuItem(value: 'orange', child: Text('Orange')),
+                      DropdownMenuItem(value: 'pink', child: Text('Pink')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        themeProvider.setAccentColor(value);
+                      }
+                    },
+                  ),
+                ],
               ),
-              const Divider(),
-              _buildSettingsRow(
-                title: 'Clear Cache',
-                subtitle: 'Clear the app\'s local cache',
-                trailing: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text('Clear'),
-                ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildSettingsCard(
+              title: 'Advanced',
+              icon: Icons.settings,
+              description: 'Advanced app settings',
+              content: Column(
+                children: [
+                  _buildSettingsRow(
+                    title: 'Data Export',
+                    subtitle: 'Export all your invoice data',
+                    trailing: OutlinedButton(
+                      onPressed: () {},
+                      child: const Text('Export'),
+                    ),
+                  ),
+                  const Divider(),
+                  _buildSettingsRow(
+                    title: 'Clear Cache',
+                    subtitle: 'Clear the app\'s local cache',
+                    trailing: OutlinedButton(
+                      onPressed: () {},
+                      child: const Text('Clear'),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        OutlinedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.logout),
-          label: const Text('Sign Out'),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 48),
-            foregroundColor: Colors.red,
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 

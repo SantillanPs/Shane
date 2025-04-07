@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -12,8 +14,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
-  String? _errorMessage;
   bool _obscurePassword = true;
 
   @override
@@ -23,44 +23,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Simulate login authentication
-  Future<bool> _authenticate(String email, String password) async {
-    // In a real app, you would connect to your authentication service here
-    await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-
-    // For demo purposes, accept any email with '@' and password longer than 5 chars
-    return email.contains('@') && password.length > 5;
-  }
-
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final success = await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-      try {
-        final success = await _authenticate(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-
-        if (success) {
-          // Navigate to home screen on successful login
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, '/');
-          }
-        } else {
-          setState(() {
-            _errorMessage = 'Invalid email or password';
-            _isLoading = false;
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _errorMessage = 'Login failed. Please try again.';
-          _isLoading = false;
-        });
+      if (success && mounted) {
+        Navigator.pushReplacementNamed(context, '/');
       }
     }
   }
@@ -160,37 +132,50 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 24),
 
                           // Error message (if any)
-                          if (_errorMessage != null)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppTheme.dangerColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: AppTheme.dangerColor.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.error_outline,
-                                    color: AppTheme.dangerColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      _errorMessage!,
-                                      style: const TextStyle(
-                                        color: AppTheme.dangerColor,
-                                        fontSize: 14,
+                          Consumer<AuthProvider>(
+                            builder: (context, authProvider, _) {
+                              if (authProvider.errorMessage != null) {
+                                return Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.dangerColor.withOpacity(
+                                          0.1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: AppTheme.dangerColor
+                                              .withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.error_outline,
+                                            color: AppTheme.dangerColor,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              authProvider.errorMessage!,
+                                              style: const TextStyle(
+                                                color: AppTheme.dangerColor,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          if (_errorMessage != null) const SizedBox(height: 16),
+                                    const SizedBox(height: 16),
+                                  ],
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
 
                           // Email field
                           TextFormField(
@@ -269,37 +254,43 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 24),
 
                           // Login button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _login,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                          Consumer<AuthProvider>(
+                            builder: (context, authProvider, _) {
+                              return SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed:
+                                      authProvider.isLoading ? null : _login,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    backgroundColor: AppTheme.primaryColor,
+                                    disabledBackgroundColor: AppTheme
+                                        .primaryColor
+                                        .withOpacity(0.5),
+                                  ),
+                                  child:
+                                      authProvider.isLoading
+                                          ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                          : const Text(
+                                            'LOGIN',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1,
+                                            ),
+                                          ),
                                 ),
-                                backgroundColor: AppTheme.primaryColor,
-                                disabledBackgroundColor: AppTheme.primaryColor
-                                    .withOpacity(0.5),
-                              ),
-                              child:
-                                  _isLoading
-                                      ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                      : const Text(
-                                        'LOGIN',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1,
-                                        ),
-                                      ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -318,13 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextButton(
                           onPressed: () {
                             // Navigate to signup screen
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Sign up functionality would be implemented here',
-                                ),
-                              ),
-                            );
+                            Navigator.pushNamed(context, '/signup');
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
